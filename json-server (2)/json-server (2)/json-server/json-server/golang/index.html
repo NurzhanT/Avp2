@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplement Shop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Supplement Shop</h1>
+    <div>
+        <label for="filter">Filter by Collection:</label>
+        <input type="text" id="filter" placeholder="e.g., Nutrition">
+        <button onclick="applyFilter()">Filter</button>
+    </div>
+    <div>
+        <h3>CRUD Operations</h3>
+        <button onclick="addProduct()">Add Product</button>
+        <button onclick="viewProducts()">View Products</button>
+        <button onclick="updateProduct()">Update Product</button>
+        <button onclick="deleteProduct()">Delete Product</button>
+    </div>
+    <div id="output"></div>
+
+    <script>
+        const baseUrl = 'http://localhost:8080';
+
+        function applyFilter() {
+            const filter = document.getElementById('filter').value.trim();
+            if (!filter) {
+                alert('Please enter a collection name to filter!');
+                return;
+            }
+            fetch(`${baseUrl}/filter?filter=${filter}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('output').innerHTML = JSON.stringify(data, null, 2);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function addProduct() {
+            const collection = prompt('Enter the collection name (e.g., Nutrition, Steroids):').trim();
+            if (!collection) {
+                alert('Collection name is required!');
+                return;
+            }
+
+            const name = prompt('Enter product name:').trim();
+            const price = parseFloat(prompt('Enter product price:'));
+            const stock = parseInt(prompt('Enter stock quantity:'), 10);
+
+            if (!name || isNaN(price) || isNaN(stock)) {
+                alert('Invalid product details provided!');
+                return;
+            }
+
+            const product = { name, price, stock };
+            fetch(`${baseUrl}/${collection}/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product),
+            }).then(response => response.text())
+              .then(message => {
+                  alert(message);
+                  viewProducts(); // Refresh the products after adding
+              })
+              .catch(console.error);
+        }
+
+        function viewProducts() {
+            const collection = prompt('Enter the collection name (e.g., Nutrition, Steroids):').trim();
+            if (!collection) {
+                alert('Collection name is required!');
+                return;
+            }
+
+            fetch(`${baseUrl}/${collection}/view`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('output').innerHTML = JSON.stringify(data, null, 2);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateProduct() {
+            const collection = prompt('Enter the collection name (e.g., Nutrition, Steroids):').trim();
+            if (!collection) {
+                alert('Collection name is required!');
+                return;
+            }
+
+            const filterField = prompt('Enter the field name to filter (e.g., name):').trim();
+            const filterValue = prompt(`Enter the value of ${filterField} to update:`).trim();
+
+            const updateField = prompt('Enter the field name to update (e.g., price):').trim();
+            const updateValue = prompt(`Enter the new value for ${updateField}:`).trim();
+
+            if (!filterField || !filterValue || !updateField || !updateValue) {
+                alert('Invalid update details provided!');
+                return;
+            }
+
+            const updateData = {
+                filter: { [filterField]: filterValue },
+                update: { [updateField]: isNaN(updateValue) ? updateValue : parseFloat(updateValue) },
+            };
+
+            fetch(`${baseUrl}/${collection}/update`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData),
+            }).then(response => response.text())
+              .then(message => {
+                  alert(message);
+                  viewProducts(); // Refresh the products after updating
+              })
+              .catch(console.error);
+        }
+
+        function deleteProduct() {
+            const collection = prompt('Enter the collection name (e.g., Nutrition, Steroids):').trim();
+            if (!collection) {
+                alert('Collection name is required!');
+                return;
+            }
+
+            const filterField = prompt('Enter the field name to filter (e.g., name):').trim();
+            const filterValue = prompt(`Enter the value of ${filterField} to delete:`).trim();
+
+            if (!filterField || !filterValue) {
+                alert('Invalid filter details provided!');
+                return;
+            }
+
+            const filter = { [filterField]: filterValue };
+
+            fetch(`${baseUrl}/${collection}/delete`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filter),
+            }).then(response => response.text())
+              .then(message => {
+                  alert(message);
+                  viewProducts(); // Refresh the products after deleting
+              })
+              .catch(console.error);
+        }
+    </script>
+</body>
+</html>
